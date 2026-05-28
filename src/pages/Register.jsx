@@ -1,7 +1,7 @@
 import axios from 'axios'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 
 const Register = ({ setUser }) => {
     const navigate = useNavigate()
@@ -9,6 +9,29 @@ const Register = ({ setUser }) => {
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
+    const [isPasswordFocused, setIsPasswordFocused] = useState(false)
+
+    // Password strength criteria tracking states
+    const [checks, setChecks] = useState({
+        length: false,
+        capital: false,
+        number: false,
+        symbol: false
+    })
+
+    // Evaluate password strength in real-time as typing happens
+    useEffect(() => {
+        const pass = formData.password
+        setChecks({
+            length: pass.length >= 8,
+            capital: /[A-Z]/.test(pass),
+            number: /[0-9]/.test(pass),
+            symbol: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pass)
+        })
+    }, [formData.password])
+
+    // Determine if overall password is safe to submit
+    const isPasswordStrong = checks.length && checks.capital && checks.number && checks.symbol
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -16,6 +39,11 @@ const Register = ({ setUser }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
+        if (!isPasswordStrong) {
+            setError("Please satisfy all password requirements first.")
+            return
+        }
+
         setLoading(true)
         setError('')
         try {
@@ -39,7 +67,6 @@ const Register = ({ setUser }) => {
 
     return (
         <div style={styles.page}>
-            {/* Animated background blobs */}
             <div style={styles.blobBlue} />
             <div style={styles.blobPurple} />
             <div style={styles.blobIndigo} />
@@ -64,18 +91,21 @@ const Register = ({ setUser }) => {
                     </p>
                 </motion.div>
 
-                {/* Error */}
-                {error && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        style={styles.errorBox}
-                    >
-                        {error}
-                    </motion.div>
-                )}
+                {/* Main Error Box */}
+                <AnimatePresence>
+                    {error && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, height: 'auto', scale: 1 }}
+                            exit={{ opacity: 0, height: 0, scale: 0.95 }}
+                            style={styles.errorBox}
+                        >
+                            {error}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
-                {/* Google Button - Converted to clean anchor link */}
+                {/* Google Button */}
                 <motion.a
                     href="http://localhost:5000/api/users/google"
                     initial={{ opacity: 0, y: 12 }}
@@ -89,7 +119,6 @@ const Register = ({ setUser }) => {
                     Sign up with Google
                 </motion.a>
 
-                {/* Divider */}
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -103,6 +132,7 @@ const Register = ({ setUser }) => {
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} style={styles.form}>
+                    {/* Username Input */}
                     <motion.div
                         initial={{ opacity: 0, x: -12 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -123,6 +153,7 @@ const Register = ({ setUser }) => {
                         />
                     </motion.div>
 
+                    {/* Email Input */}
                     <motion.div
                         initial={{ opacity: 0, x: -12 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -143,6 +174,7 @@ const Register = ({ setUser }) => {
                         />
                     </motion.div>
 
+                    {/* Password Input Container */}
                     <motion.div
                         initial={{ opacity: 0, x: -12 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -158,8 +190,14 @@ const Register = ({ setUser }) => {
                             type={showPassword ? "text" : "password"}
                             placeholder="Enter your password"
                             style={styles.input}
-                            onFocus={e => Object.assign(e.target.style, styles.inputFocus)}
-                            onBlur={e => Object.assign(e.target.style, styles.inputBlur)}
+                            onFocus={(e) => {
+                                Object.assign(e.target.style, styles.inputFocus);
+                                setIsPasswordFocused(true);
+                            }}
+                            onBlur={(e) => {
+                                Object.assign(e.target.style, styles.inputBlur);
+                                if (formData.password === "") setIsPasswordFocused(false);
+                            }}
                         />
                         <button
                             type="button"
@@ -170,15 +208,57 @@ const Register = ({ setUser }) => {
                         </button>
                     </motion.div>
 
+                    {/* Real-time Animated Password Strength Checklist */}
+                    <AnimatePresence>
+                        {(isPasswordFocused || formData.password.length > 0) && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0, y: -10 }}
+                                animate={{ opacity: 1, height: 'auto', y: 0 }}
+                                exit={{ opacity: 0, height: 0, y: -10 }}
+                                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                                style={styles.checklistContainer}
+                            >
+                                <div style={styles.checkRow}>
+                                    <CheckIcon active={checks.length} />
+                                    <span style={{ ...styles.checkText, color: checks.length ? '#34A853' : 'rgba(255,255,255,0.4)' }}>
+                                        At least 8 characters
+                                    </span>
+                                </div>
+                                <div style={styles.checkRow}>
+                                    <CheckIcon active={checks.capital} />
+                                    <span style={{ ...styles.checkText, color: checks.capital ? '#34A853' : 'rgba(255,255,255,0.4)' }}>
+                                        At least one capital letter (A-Z)
+                                    </span>
+                                </div>
+                                <div style={styles.checkRow}>
+                                    <CheckIcon active={checks.number} />
+                                    <span style={{ ...styles.checkText, color: checks.number ? '#34A853' : 'rgba(255,255,255,0.4)' }}>
+                                        At least one number (0-9)
+                                    </span>
+                                </div>
+                                <div style={styles.checkRow}>
+                                    <CheckIcon active={checks.symbol} />
+                                    <span style={{ ...styles.checkText, color: checks.symbol ? '#34A853' : 'rgba(255,255,255,0.4)' }}>
+                                        At least one special character (!@#$%)
+                                    </span>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Submit Button */}
                     <motion.button
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.52, duration: 0.4 }}
-                        whileHover={{ scale: 1.02, boxShadow: '0 8px 32px rgba(99,102,241,0.5)' }}
-                        whileTap={{ scale: 0.97 }}
+                        whileHover={isPasswordStrong && !loading ? { scale: 1.02, boxShadow: '0 8px 32px rgba(99,102,241,0.5)' } : {}}
+                        whileTap={isPasswordStrong && !loading ? { scale: 0.97 } : {}}
                         type="submit"
-                        disabled={loading}
-                        style={{ ...styles.submitBtn, ...(loading ? styles.submitBtnDisabled : {}) }}
+                        disabled={loading || !isPasswordStrong}
+                        style={{ 
+                            ...styles.submitBtn, 
+                            ...((loading || !isPasswordStrong) ? styles.submitBtnDisabled : {}) 
+                        }}
                     >
                         {loading ? (
                             <span style={styles.loadingRow}>
@@ -232,6 +312,21 @@ const Spinner = () => (
         style={{ animation: 'spin 0.8s linear infinite' }}>
         <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
     </svg>
+)
+
+// Dynamic Checkbox Icon component that scales and switches colors
+const CheckIcon = ({ active }) => (
+    <motion.svg 
+        animate={{ scale: active ? [1, 1.2, 1] : 1, color: active ? "#34A853" : "rgba(255,255,255,0.2)" }}
+        transition={{ duration: 0.25 }}
+        width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+    >
+        {active ? (
+            <polyline points="20 6 9 17 4 12" />
+        ) : (
+            <circle cx="12" cy="12" r="10" />
+        )}
+    </motion.svg>
 )
 
 /* ── Styles ── */
@@ -294,6 +389,7 @@ const styles = {
         background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)',
         borderRadius: '10px', padding: '10px 14px', color: '#fca5a5',
         fontSize: '13px', marginBottom: '16px', textAlign: 'center',
+        overflow: 'hidden'
     },
     googleBtn: {
         width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -336,6 +432,27 @@ const styles = {
         background: 'none', border: 'none', cursor: 'pointer',
         color: 'rgba(148,163,184,0.6)', padding: '2px', display: 'flex',
     },
+    checklistContainer: {
+        background: 'rgba(255, 255, 255, 0.02)',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        borderRadius: '12px',
+        padding: '14px 16px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+        overflow: 'hidden',
+        marginTop: '-4px'
+    },
+    checkRow: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px'
+    },
+    checkText: {
+        fontSize: '13px',
+        fontWeight: '400',
+        transition: 'color 0.2s ease'
+    },
     submitBtn: {
         width: '100%', padding: '14px', marginTop: '4px',
         background: 'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)',
@@ -346,7 +463,10 @@ const styles = {
         boxSizing: 'border-box'
     },
     submitBtnDisabled: {
-        background: 'rgba(99,102,241,0.3)', cursor: 'not-allowed',
+        background: 'rgba(255,255,255,0.05)',
+        color: 'rgba(255,255,255,0.2)',
+        border: '1px solid rgba(255,255,255,0.05)',
+        cursor: 'not-allowed',
         boxShadow: 'none',
     },
     loadingRow: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' },
