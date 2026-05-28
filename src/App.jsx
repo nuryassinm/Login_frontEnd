@@ -11,6 +11,7 @@ import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Home from './pages/Home';
 import Register from './pages/Register';
+import OAuthSuccess from './pages/OAuthSuccess';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, user }) => {
@@ -54,6 +55,7 @@ function App() {
       <Routes>
         {/* Public routes */}
         <Route path="/login" element={<Login setUser={setUser} />} />
+        <Route path="/oauth-success" element={<OAuthSuccess setUser={setUser} />} />
         <Route path="/register" element={<Register setUser={setUser} />} />
         
         {/* Protected routes */}
