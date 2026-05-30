@@ -75,7 +75,7 @@ const Login = ({ setUser }) => {
                     </motion.div>
                 )}
 
-                {/* Google Button - Fixed to cleanly act as a direct link */}
+                {/* Google Button */}
                 <motion.a
                     href="http://localhost:5000/api/users/google"
                     initial={{ opacity: 0, y: 12 }}
@@ -150,13 +150,19 @@ const Login = ({ setUser }) => {
                         </button>
                     </motion.div>
 
+                    {/* Forgot Password Link Wrapper */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.48 }}
                         style={{ textAlign: 'right', marginTop: '-4px' }}
                     >
-                        <Link to="/forgot-password" style={styles.forgotLink}>
+                        <Link 
+                            to="/forgot-password" 
+                            style={styles.forgotLink}
+                            onMouseEnter={e => e.target.style.color = '#818cf8'}
+                            onMouseLeave={e => e.target.style.color = 'rgba(148,163,184,0.7)'}
+                        >
                             Forgot your password?
                         </Link>
                     </motion.div>
@@ -292,7 +298,7 @@ const styles = {
         border: '1px solid rgba(255,255,255,0.12)', borderRadius: '12px',
         color: '#e2e8f0', fontSize: '14.5px', fontWeight: '500',
         cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.01em',
-        textDecoration: 'none', boxSizing: 'border-box' // 👈 Fixed text decoration & sizing for matching link appearance
+        textDecoration: 'none', boxSizing: 'border-box'
     },
     divider: {
         display: 'flex', alignItems: 'center', gap: '12px',
@@ -329,7 +335,7 @@ const styles = {
     },
     forgotLink: {
         color: 'rgba(148,163,184,0.7)', fontSize: '13px',
-        textDecoration: 'none', transition: 'color 0.2s',
+        textDecoration: 'none', transition: 'color 0.2s ease',
     },
     submitBtn: {
         width: '100%', padding: '14px', marginTop: '4px',
